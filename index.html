@@ -36,21 +36,32 @@
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
-            padding: 1vh 2vw;
+            /* UPDATED: Match Calendar Layout */
+            align-items: center; 
+            justify-content: flex-start;
+            padding-top: 3vh;
             touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
         }
 
+        /* --- Main Container (Matches Calendar) --- */
+        .container {
+            width: 96vw;
+            height: 87vh; /* Fixed height to ensure bottom buffer */
+            display: flex;
+            flex-direction: column;
+        }
+
         /* --- Grid Layout --- */
         .grid-container {
-            flex: 1; /* Take remaining space */
+            flex: 1; /* Take remaining space in container */
             display: grid;
             /* 6 columns, 5 rows = 30 items */
             grid-template-columns: repeat(6, 1fr);
             grid-template-rows: repeat(5, 1fr);
             gap: 1vh;
-            padding-bottom: 2vh;
+            padding-bottom: 1vh;
         }
 
         .number-box {
@@ -71,15 +82,15 @@
         }
 
         .digit {
-            font-size: 7.5vh; /* UPDATED: Much larger size */
+            font-size: 7.5vh; 
             font-weight: 800;
             color: var(--text-primary);
-            line-height: 1; /* Tighter line height to fit text below */
+            line-height: 1; 
             transition: color 0.2s;
         }
 
         .spelling {
-            font-size: 1.8vh; /* Slightly smaller to accommodate big digits */
+            font-size: 1.8vh; 
             font-weight: 600;
             color: var(--text-secondary);
             margin-top: 0.2vh;
@@ -92,7 +103,7 @@
         /* Highlight Digit Only */
         .highlight-digit .digit {
             color: #d97706; /* Darker Orange/Yellow */
-            transform: scale(1.1); /* Reduced scale slightly so huge digits don't clip */
+            transform: scale(1.1); 
         }
         .highlight-digit {
             background-color: #fef3c7; /* Light Yellow bg */
@@ -119,6 +130,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .count-btn {
@@ -149,12 +161,14 @@
 </head>
 <body>
 
-    <div class="grid-container" id="grid">
-        <!-- JS will populate 1-30 -->
-    </div>
+    <div class="container">
+        <div class="grid-container" id="grid">
+            <!-- JS will populate 1-30 -->
+        </div>
 
-    <div class="footer">
-        <div class="count-btn" id="countBtn">COUNT</div>
+        <div class="footer">
+            <div class="count-btn" id="countBtn">COUNT</div>
+        </div>
     </div>
 
     <script>
