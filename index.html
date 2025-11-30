@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Fullscreen App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Count to 30</title>
+    
+    <style>
+        /* --- Reset & Variables --- */
+        :root {
+            --bg-color: #f8fafc;
+            --box-bg: #ffffff;
+            --text-primary: #334155;
+            --text-secondary: #64748b;
+            --highlight-bg: #facc15; /* Yellow */
+            --highlight-border: #eab308;
+            --button-bg: #3b82f6;
+            --button-text: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1vh 2vw;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* --- Grid Layout --- */
+        .grid-container {
+            flex: 1; /* Take remaining space */
+            display: grid;
+            /* 6 columns, 5 rows = 30 items */
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 1vh;
+            padding-bottom: 2vh;
+        }
+
+        .number-box {
+            background-color: var(--box-bg);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s, border-color 0.2s, background-color 0.2s;
+        }
+
+        .number-box:active {
+            transform: scale(0.95);
+        }
+
+        .digit {
+            font-size: 7.5vh; /* UPDATED: Much larger size */
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1; /* Tighter line height to fit text below */
+            transition: color 0.2s;
+        }
+
+        .spelling {
+            font-size: 1.8vh; /* Slightly smaller to accommodate big digits */
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 0.2vh;
+            text-transform: lowercase;
+            transition: color 0.2s;
+        }
+
+        /* --- Highlighting States --- */
+        
+        /* Highlight Digit Only */
+        .highlight-digit .digit {
+            color: #d97706; /* Darker Orange/Yellow */
+            transform: scale(1.1); /* Reduced scale slightly so huge digits don't clip */
+        }
+        .highlight-digit {
+            background-color: #fef3c7; /* Light Yellow bg */
+            border-color: var(--highlight-border);
+        }
+
+        /* Highlight Both (English) */
+        .highlight-all .digit {
+            color: #d97706;
+        }
+        .highlight-all .spelling {
+            color: #b45309;
+            font-weight: 700;
+            transform: scale(1.1);
+        }
+        .highlight-all {
+            background-color: #fef3c7;
+            border-color: var(--highlight-border);
+        }
+
+        /* --- Footer Button --- */
+        .footer {
+            height: 12vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .count-btn {
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-size: 4vh;
+            font-weight: 700;
+            padding: 1.5vh 6vh;
+            border-radius: 50px;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .count-btn:active {
+            transform: scale(0.95);
+            background-color: #2563eb;
+        }
+        
+        .count-btn.stop-mode {
+            background-color: #ef4444; /* Red for Stop */
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="grid-container" id="grid">
+        <!-- JS will populate 1-30 -->
+    </div>
+
+    <div class="footer">
+        <div class="count-btn" id="countBtn">COUNT</div>
+    </div>
+
+    <script>
+        // --- Data Generation ---
+        const numbers = [];
+        const englishWords = [
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+            "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty",
+            "twenty-one", "twenty-two", "twenty-three", "twenty-four", "twenty-five", "twenty-six", "twenty-seven", "twenty-eight", "twenty-nine", "thirty"
+        ];
+        
+        // Simple Chinese Number Generator for 1-30
+        const zhDigits = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十"];
+        function getZh(n) {
+            if (n <= 10) return zhDigits[n];
+            if (n < 20) return "十" + zhDigits[n % 10];
+            if (n === 20) return "二十";
+            if (n < 30) return "二十" + zhDigits[n % 10];
+            if (n === 30) return "三十";
+            return "";
+        }
+
+        for (let i = 1; i <= 30; i++) {
+            numbers.push({
+                digit: i,
+                en: englishWords[i-1],
+                zh: getZh(i)
+            });
+        }
+
+        // --- Render Grid ---
+        const grid = document.getElementById('grid');
+        const boxElements = []; // Store references
+
+        numbers.forEach((item, index) => {
+            const box = document.createElement('div');
+            box.className = 'number-box';
+            box.innerHTML = `
+                <div class="digit">${item.digit}</div>
+                <div class="spelling">${item.en}</div>
+            `;
+            
+            // Interaction: Click individual box
+            box.onclick = () => playSingleNumber(index);
+            
+            grid.appendChild(box);
+            boxElements.push(box);
+        });
+
+        // --- Speech Logic ---
+        let isCounting = false;
+        let countIndex = 0;
+        let speechCancelled = false; // Flag to prevent zombie speech after stop
+
+        function stopSpeech() {
+            speechCancelled = true;
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            // Clear all highlights
+            boxElements.forEach(el => {
+                el.classList.remove('highlight-all');
+                el.classList.remove('highlight-digit');
+            });
+        }
+
+        // Play one number (English -> Chinese) then stop or continue
+        function speakNumber(index, onComplete) {
+            if (!boxElements[index]) return;
+
+            const item = numbers[index];
+            const el = boxElements[index];
+
+            // 1. English Utterance
+            const uEn = new SpeechSynthesisUtterance(item.en);
+            uEn.lang = 'en-US';
+            uEn.rate = 0.5; // Moderate speed
+
+            // 2. Chinese Utterance
+            const uZh = new SpeechSynthesisUtterance(item.zh);
+            uZh.lang = 'zh-CN';
+            uZh.rate = 0.5;
+
+            // --- Highlight Logic ---
+            
+            // English Start
+            uEn.onstart = () => {
+                if (speechCancelled) return;
+                el.classList.remove('highlight-digit');
+                el.classList.add('highlight-all');
+            };
+
+            // English End -> Play Chinese
+            uEn.onend = () => {
+                el.classList.remove('highlight-all');
+                if (speechCancelled) return;
+                
+                // Direct call ensures Chinese plays
+                window.speechSynthesis.speak(uZh);
+            };
+
+            // Chinese Start
+            uZh.onstart = () => {
+                if (speechCancelled) return;
+                el.classList.add('highlight-digit');
+            };
+
+            // Chinese End -> Next Number
+            uZh.onend = () => {
+                el.classList.remove('highlight-digit');
+                if (speechCancelled) return;
+                if (onComplete) onComplete();
+            };
+
+            // Error handling (Safety to prevent freezing)
+            uEn.onerror = uZh.onerror = () => {
+                el.classList.remove('highlight-all');
+                el.classList.remove('highlight-digit');
+                if (!speechCancelled && onComplete) onComplete();
+            };
+
+            window.speechSynthesis.speak(uEn);
+        }
+
+        function playSingleNumber(index) {
+            // If currently auto-counting, stop it first
+            if (isCounting) {
+                toggleCount(); 
+            } else {
+                stopSpeech(); 
+            }
+            
+            speechCancelled = false; // Reset flag
+            speakNumber(index, null);
+        }
+
+        // --- Auto Count Logic ---
+        const btn = document.getElementById('countBtn');
+
+        function toggleCount() {
+            if (isCounting) {
+                // Stop
+                isCounting = false;
+                stopSpeech();
+                btn.innerText = "COUNT";
+                btn.classList.remove('stop-mode');
+                countIndex = 0; 
+            } else {
+                // Start
+                isCounting = true;
+                speechCancelled = false;
+                btn.innerText = "STOP";
+                btn.classList.add('stop-mode');
+                countIndex = 0;
+                playNextInSequence();
+            }
+        }
+
+        function playNextInSequence() {
+            if (!isCounting) return;
+            
+            if (countIndex >= numbers.length) {
+                // Finished
+                toggleCount();
+                return;
+            }
+
+            speakNumber(countIndex, () => {
+                countIndex++;
+                if (isCounting) {
+                    playNextInSequence();
+                }
+            });
+        }
+
+        btn.onclick = toggleCount;
+
+    </script>
+</body>
+</html>
